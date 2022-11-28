@@ -72,3 +72,7 @@ group :test do
 end
 
 gem "opal", "~> 1.6"
+
+gem "listen", "~> 3.7", :group => :development
+
+gem "opal-browser", "~> 0.3.3"

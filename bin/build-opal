@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+
+require 'pathname'
+app_javascript = Pathname("#{__dir__}/../app/javascript").expand_path
+app_javascript.join('build/opal').mkpath
+app_javascript.join('opal').mkpath
+
+start = Time.now
+
+system([
+  'opal',
+  '--rbrequire=opal-browser',
+  '--include=.',
+  '--compile',
+  '--no-source-map',
+  "--map='#{app_javascript.join('build/opal/application.js.map')}'",
+  app_javascript.join('opal/application.js.rb').to_s,].join(' '),
+  out: app_javascript.join('build/opal/application.js').to_s
+) or abort("[opal] Compilation failed: #{$?}")
+
+app_javascript.join('build/opal/application.js').write(
+  %{\n//# sourceMappingURL=./application.js.map\n},
+  mode: 'ab',
+)
+
+puts "[opal] Built in #{'%.3f' % (Time.now.to_f - start.to_f)}s"
+
+
+
+if ARGV.include? '--watch'
+  puts '[opal] Watching...'
+  require 'listen'
+  listener = Listen.to(app_javascript.join('opal')) do |*args|
+    puts "[opal] Changed #{args.flatten.join(", ")}"
+    system __FILE__
+  end
+  listener.start
+  sleep
+  exit
+end
